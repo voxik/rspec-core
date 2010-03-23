@@ -6,6 +6,7 @@ module Rspec
 
     class CommandLineOptions
       DEFAULT_OPTIONS_FILE = 'spec/spec.opts'
+      DEFAULT_SPEC_DIRECTORY = 'spec'
       
       attr_reader :args, :options
       
@@ -19,6 +20,7 @@ module Rspec
       end
       
       def parse
+        opts = nil
         options[:files_or_directories_to_run] = OptionParser.new do |opts|
           opts.banner = "Usage: rspec [options] [files or directories]"
 
@@ -56,12 +58,21 @@ module Rspec
           opts.on('-d', '--debug', 'Enable debugging') do |o|
             options[:debug] = true
           end
-
+          
           opts.on_tail('-h', '--help', "You're looking at it.") do 
             puts opts
             exit
           end
         end.parse!(@args)
+        
+        if @options[:files_or_directories_to_run].empty?
+          if File.directory?(DEFAULT_SPEC_DIRECTORY)
+            @options[:files_or_directories_to_run] << DEFAULT_SPEC_DIRECTORY
+          else
+            puts opts
+            exit
+          end
+        end
 
         self 
       end

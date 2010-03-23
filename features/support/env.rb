@@ -4,7 +4,7 @@ require 'aruba'
 
 module ArubaOverrides
   def detect_ruby_script(cmd)
-    if cmd =~ /^rspec /
+    if cmd =~ /^rspec\b/
       "ruby -I../../lib -S ../../bin/#{cmd}"
     else
       super(cmd)
@@ -14,3 +14,6 @@ end
 
 World(ArubaOverrides)
 
+Given /^no spec directory$/ do
+  # no-op - pure documentation
+end

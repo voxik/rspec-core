@@ -10,6 +10,7 @@ module Rspec
       def self.autorun
         return if installed_at_exit?
         @installed_at_exit = true
+
         at_exit { new.run(ARGV) ? exit(0) : exit(1) } 
       end
 
@@ -26,7 +27,9 @@ module Rspec
       end
       
       def run(args = [])
-        Rspec::Core::CommandLineOptions.parse(args).apply(configuration)
+        obj = Rspec::Core::CommandLineOptions.parse(args)
+
+        obj.apply(configuration)
 
         require_all_files(configuration)
 
