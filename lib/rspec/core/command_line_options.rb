@@ -20,61 +20,26 @@ module Rspec
       end
       
       def parse
-        opts = nil
-        options[:files_or_directories_to_run] = OptionParser.new do |opts|
-          opts.banner = "Usage: rspec [options] [files or directories]"
+        parse_command_line_args
+        display_usage unless files_given? or default_directory_exists?
+        self
+      end
 
-          opts.on('-c', '--[no-]color', '--[no-]colour', 'Enable color in the output') do |o|
-            options[:color_enabled] = o
-          end
-          
-          opts.on('-f', '--formatter [FORMATTER]', 'Choose a formatter',
-                  '  [p]rogress (default - dots)',
-                  '  [d]ocumentation (group and example names)') do |o|
-            options[:formatter] = o
-          end
+      def parse_command_line_args
+        options[:files_or_directories_to_run] = parser.parse(@args)
+      end
 
-          opts.on('-l', '--line_number [LINE]', 'Specify the line number of a single example to run') do |o|
-            options[:line_number] = o
-          end
+      def files_given?
+        !@options[:files_or_directories_to_run].empty?
+      end
 
-          opts.on('-e', '--example [PATTERN]', "Run examples whose full descriptions match this pattern",
-                  "(PATTERN is compiled into a Ruby regular expression)") do |o|
-            options[:full_description] = /#{o}/
-          end
+      def default_directory_exists?
+        @options[:files_or_directories_to_run] << DEFAULT_SPEC_DIRECTORY if File.directory?(DEFAULT_SPEC_DIRECTORY)
+      end
 
-          opts.on('-o', '--options [PATH]', 'Read configuration options from a file path.  (Defaults to spec/spec.opts)') do |o|
-            options[:options_file] = o || DEFAULT_OPTIONS_FILE
-          end
-
-          opts.on('-p', '--profile', 'Enable profiling of examples with output of the top 10 slowest examples') do |o|
-            options[:profile_examples] = o
-          end
-
-          opts.on('-b', '--backtrace', 'Enable full backtrace') do |o|
-            options[:full_backtrace] = true
-          end
-
-          opts.on('-d', '--debug', 'Enable debugging') do |o|
-            options[:debug] = true
-          end
-          
-          opts.on_tail('-h', '--help', "You're looking at it.") do 
-            puts opts
-            exit
-          end
-        end.parse!(@args)
-        
-        if @options[:files_or_directories_to_run].empty?
-          if File.directory?(DEFAULT_SPEC_DIRECTORY)
-            @options[:files_or_directories_to_run] << DEFAULT_SPEC_DIRECTORY
-          else
-            puts opts
-            exit
-          end
-        end
-
-        self 
+      def display_usage
+        puts parser
+        exit
       end
 
       def apply(config)
@@ -90,14 +55,58 @@ module Rspec
         end
       end
 
-      private
+    private
+
+      def parser
+        @parser ||= OptionParser.new do |parser|
+          parser.banner = "Usage: rspec [options] [files or directories]"
+
+          parser.on('-c', '--[no-]color', '--[no-]colour', 'Enable color in the output') do |o|
+            options[:color_enabled] = o
+          end
+          
+          parser.on('-f', '--formatter [FORMATTER]', 'Choose a formatter',
+                  '  [p]rogress (default - dots)',
+                  '  [d]ocumentation (group and example names)') do |o|
+            options[:formatter] = o
+          end
+
+          parser.on('-l', '--line_number [LINE]', 'Specify the line number of a single example to run') do |o|
+            options[:line_number] = o
+          end
+
+          parser.on('-e', '--example [PATTERN]', "Run examples whose full descriptions match this pattern",
+                  "(PATTERN is compiled into a Ruby regular expression)") do |o|
+            options[:full_description] = /#{o}/
+          end
+
+          parser.on('-o', '--options [PATH]', 'Read configuration options from a file path.  (Defaults to spec/spec.parser)') do |o|
+            options[:options_file] = o || DEFAULT_OPTIONS_FILE
+          end
+
+          parser.on('-p', '--profile', 'Enable profiling of examples with output of the top 10 slowest examples') do |o|
+            options[:profile_examples] = o
+          end
+
+          parser.on('-b', '--backtrace', 'Enable full backtrace') do |o|
+            options[:full_backtrace] = true
+          end
+
+          parser.on('-d', '--debug', 'Enable debugging') do |o|
+            options[:debug] = true
+          end
+          
+          parser.on_tail('-h', '--help', "You're looking at it.") do 
+            display_usage
+          end
+        end
+      end
 
       def parse_spec_file_contents(options_file)
         return {} unless File.exist?(options_file)
         spec_file_contents = File.readlines(options_file).map {|l| l.split}.flatten
         self.class.new(spec_file_contents).parse.options
       end
-
     end
 
   end
