@@ -138,16 +138,26 @@ module RSpec
 
         def read_failed_line(exception, example)
           original_file = example.file_path.to_s.downcase
-          matching_line = exception.backtrace.detect { |line| line.split(':').first.downcase == original_file.downcase }
-
+          matching_line = exception.backtrace.detect { |line| extract_file_path(line).downcase == original_file.downcase }
           return "Unable to find matching line from backtrace" if matching_line.nil?
 
-          file_path, line_number = matching_line.split(':')
+          file_path = extract_file_path(matching_line)
           if File.exist?(file_path)
+            line_number = extract_line_number(matching_line)
             open(file_path, 'r') { |f| f.readlines[line_number.to_i - 1] }
           else
             "Unable to find #{file_path} to read failed line"
           end
+        end
+
+        def extract_file_path(line)
+          Pathname.new(line).cleanpath.to_s
+        end
+
+        def extract_line_number(line)
+          path = extract_file_path(line)
+          line.gsub!(/#{path + ':'}/, '')
+          line.split(':').first
         end
 
         def sync_output

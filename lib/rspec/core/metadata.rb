@@ -164,7 +164,11 @@ EOM
 
       def file_and_line_number(metadata)
         entry = candidate_entries_from_caller(metadata).first
-        entry && entry.split(":")
+        if entry
+          path = Pathname.new(entry).cleanpath.to_s
+          entry = entry.gsub(/#{path + ':'}/, '')
+        end
+        entry && [path, entry.split(":")].flatten
       end
 
       def candidate_entries_from_caller(metadata)
