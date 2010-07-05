@@ -55,4 +55,23 @@ describe RSpec::Core::Formatters::BaseFormatter do
     end
   end
   
+  describe "extract_file_path" do
+    it "extracts file path from backtrace line in *nix" do
+      formatter.__send__(:extract_file_path, "/path/file.html.erb_spec.rb:14:in `block (2 levels) in <top (required)>'").should == "/path/file.html.erb_spec.rb"
+    end
+
+    it "extracts file path from backtrace line in Windows" do
+      formatter.__send__(:extract_file_path, "C:/path/file.html.erb_spec.rb:14:in `block (2 levels) in <top (required)>'").should == "C:/path/file.html.erb_spec.rb"
+    end
+  end
+
+  describe "extract_line_number" do
+    it "extract line number from backtrace line in *nix" do
+      formatter.__send__(:extract_line_number, "/path/file.html.erb_spec.rb:14:in `block (2 levels) in <top (required)>'").should == "14" 
+    end
+
+    it "extract line number from backtrace line in Windows" do
+      formatter.__send__(:extract_line_number, "C:/path/file.html.erb_spec.rb:14:in `block (2 levels) in <top (required)>'").should == "14" 
+    end
+  end
 end
